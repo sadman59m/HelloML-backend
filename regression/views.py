@@ -9,6 +9,8 @@ import json
 import uuid
 import os
 
+from .preprocessor import DatasetPreprocessor
+
 
 # Create your views here.
 
@@ -25,20 +27,27 @@ class Regression_view(View):
         
         if file_data:
             new_uuid = uuid.uuid4()
-            file_name = f"{file_data.name.split('.')[0]}_{new_uuid}.csv"
+            file_name = f"{new_uuid}.csv"
             target_folder = os.path.join(settings.MEDIA_ROOT)
             os.makedirs(target_folder, exist_ok=True)
             file_path = os.path.join(target_folder, file_name)
+            try:
+                with default_storage.open(file_path, 'wb+') as destination:
+                    for chunk in file_data.chunks():
+                        destination.write(chunk)
+            except:
+                return JsonResponse({"message": "file creating failed"}, status=400)
             
-            with default_storage.open(file_path, 'wb+') as destination:
-                for chunk in file_data.chunks():
-                    destination.write(chunk)
-                    
-            return JsonResponse({"message": "file creation successful",
-                                "file_path": file_path,
-                                "file_name": file_name},
-                                status = 201)
+            new_dataset = DatasetPreprocessor(file_path, file_name)
+            new_dataset.clean_file()
+            return JsonResponse({"message": "operation successful"}, status = 201)
+            
         else:
             return JsonResponse({"message": "file creating failed"}, status=400)
+        
+        # return JsonResponse({"message": "file creation successful",
+        #                             "file_path": file_path,
+        #                             "file_name": file_name},
+        #                             status = 201)
         
         return JsonResponse({"message": "request received"}, status=201)
