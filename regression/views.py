@@ -3,7 +3,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
+from django.conf import settings
+from django.core.files.storage import default_storage
 import json
+import uuid
+import os
+
+
 # Create your views here.
 
 
@@ -16,7 +22,23 @@ class Regression_view(View):
         file_data = request.FILES.get("csvFile")
         json_data = request.POST.get("selectedModels")
         model_data = json.loads(json_data)
-        print(file_data)
-        for data in model_data:
-            print(data["name"], data["checked"])
+        
+        if file_data:
+            new_uuid = uuid.uuid4()
+            file_name = f"{file_data.name.split('.')[0]}_{new_uuid}.csv"
+            target_folder = os.path.join(settings.MEDIA_ROOT)
+            os.makedirs(target_folder, exist_ok=True)
+            file_path = os.path.join(target_folder, file_name)
+            
+            with default_storage.open(file_path, 'wb+') as destination:
+                for chunk in file_data.chunks():
+                    destination.write(chunk)
+                    
+            return JsonResponse({"message": "file creation successful",
+                                "file_path": file_path,
+                                "file_name": file_name},
+                                status = 201)
+        else:
+            return JsonResponse({"message": "file creating failed"}, status=400)
+        
         return JsonResponse({"message": "request received"}, status=201)
