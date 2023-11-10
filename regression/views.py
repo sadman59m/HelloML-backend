@@ -66,6 +66,7 @@ class Regression_view(View):
             
             #returns a tuple with 1st the 2D array, 2nd success flag True or False
             preprocessed_file_values_tuple = new_dataset.clean_file()
+            print(preprocessed_file_values_tuple[1])
             
             #access the 2nd value to see the success flag. False if preprocessing fails
             if preprocessed_file_values_tuple[1] == False:
@@ -77,11 +78,16 @@ class Regression_view(View):
                 
             #convert and get the csv file for this numpy array
             preprocessed_file_values = preprocessed_file_values_tuple[0]
-            print(preprocessed_file_values)
+            # print(preprocessed_file_values)
             # takes the 2D values and return a dict with filename and filepath
             preprocessed_file_dict = new_dataset.get_preprocessed_csv_file(preprocessed_file_values)
             
-            
+            if preprocessed_file_dict == False:
+                return JsonResponse({"preprocessSuccess": False, 
+                                     "errorMessage": """Data Preprocessing Failed. This Dataset is not suitable for our Operations.
+                                     Please, try with another dataset accourding to our instructions""",
+                                     }, 
+                                    status=200)
             # appling dataset to the selected models    
             # if len(selected_models) > 0:
             #     linear_flag = False
