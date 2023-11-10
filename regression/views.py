@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.conf import settings
 from django.core.files.storage import default_storage
 import json
@@ -25,7 +25,7 @@ class Regression_view(View):
         json_data = request.POST.get("selectedModels")
         model_data = json.loads(json_data)
         
-        if file_data:
+        if file_data and file_data.content_type == 'text/csv':
             new_uuid = uuid.uuid4()
             file_name = f"{new_uuid}.csv"
             target_folder = os.path.join(settings.MEDIA_ROOT)
@@ -36,18 +36,33 @@ class Regression_view(View):
                     for chunk in file_data.chunks():
                         destination.write(chunk)
             except:
-                return JsonResponse({"message": "file creating failed"}, status=400)
+                return JsonResponse({"message": "file creation failed"}, status=400)
             
             new_dataset = DatasetPreprocessor(file_path, file_name)
-            new_dataset.clean_file()
-            return JsonResponse({"message": "operation successful"}, status = 201)
+            preprocessed_file_dict = new_dataset.clean_file()
+            return JsonResponse({"preprocessSuccess": True,
+                                 "fileInfo": preprocessed_file_dict}, status = 201)
             
         else:
-            return JsonResponse({"message": "file creating failed"}, status=400)
+            return JsonResponse({"errorMessage": "Invalid Input File"}, status=400)
         
-        # return JsonResponse({"message": "file creation successful",
-        #                             "file_path": file_path,
-        #                             "file_name": file_name},
-        #                             status = 201)
         
-        return JsonResponse({"message": "request received"}, status=201)
+
+@csrf_exempt
+def file_download_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            file_name = data["fileName"]
+            file_path = os.path.join(settings.BASE_DIR, "files", "preprocessed", file_name)
+            print(file_path)
+            
+            # Check if the file exists
+            if os.path.exists(file_path):
+                return FileResponse(open(file_path, 'rb'))
+            else:
+                return JsonResponse({"errorMessage": "File Not Found"}, status = 404)
+        except:
+            return JsonResponse({"errorMessage": "Invalid Json Format"})
+    else:
+        return JsonResponse({"errorMessage": "Unsupported Http method"}, status=400)

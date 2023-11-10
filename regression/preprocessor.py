@@ -67,11 +67,15 @@ class DatasetPreprocessor():
       cleaned_preprocessed_df = pd.DataFrame(cleaned_processed_df_values)
       target_folder = os.path.join(settings.BASE_DIR, 'files', 'preprocessed')
       os.makedirs(target_folder, exist_ok=True)
-      cleaned_file_path = os.path.join(target_folder, f"preprocessed_{self.file_name}")
+      file_name = f"preprocessed_{self.file_name}"
+      cleaned_file_path = os.path.join(target_folder, file_name)
       print(cleaned_preprocessed_df)
       print(cleaned_file_path)
       cleaned_preprocessed_df.to_csv(cleaned_file_path, index=False)
-      return cleaned_file_path
+      preprocessed_file_dict = {}
+      preprocessed_file_dict["filePath"] = cleaned_file_path
+      preprocessed_file_dict["fileName"] = file_name
+      return preprocessed_file_dict
         
       
       
