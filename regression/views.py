@@ -10,6 +10,7 @@ import uuid
 import os
 
 from .preprocessor import DatasetPreprocessor
+from .mlmodels import LinearRegression
 
 
 # Create your views here.
@@ -25,6 +26,28 @@ class Regression_view(View):
         json_data = request.POST.get("selectedModels")
         model_data = json.loads(json_data)
         
+        # get the all models info
+        all_models = model_data[0]
+        print(all_models)
+        selected_models = []
+        
+        # filter the model name of the selected models
+        for modelInfo in all_models:
+            if modelInfo['checked'] == True:
+                selected_models.append(modelInfo["id"])
+                
+        print(selected_models)
+        print(len(selected_models))
+        
+        # validating split ratio
+        try:
+            split_ratio = float(model_data[-1].get('splitRatio'))
+            print(split_ratio)
+            if split_ratio <= 0.0 or split_ratio >= 1.0:
+                raise Exception("Invalid Split Ration")
+        except:
+            return JsonResponse({"errorMessage": "Invalid Split Ratio.Keep in Range of 0 and 1."}, status = 400)
+        
         if file_data and file_data.content_type == 'text/csv':
             new_uuid = uuid.uuid4()
             file_name = f"{new_uuid}.csv"
@@ -38,11 +61,42 @@ class Regression_view(View):
             except:
                 return JsonResponse({"message": "file creation failed"}, status=400)
             
+            # apply Data Preprocessor
             new_dataset = DatasetPreprocessor(file_path, file_name)
-            preprocessed_file_dict = new_dataset.clean_file()
-            return JsonResponse({"preprocessSuccess": True,
-                                 "fileInfo": preprocessed_file_dict}, status = 201)
             
+            #returns a tuple with 1st the 2D array, 2nd success flag True or False
+            preprocessed_file_values_tuple = new_dataset.clean_file()
+            
+            #access the 2nd value to see the success flag. False if preprocessing fails
+            if preprocessed_file_values_tuple[1] == False:
+                return JsonResponse({"preprocessSuccess": False, 
+                                     "errorMessage": """Data Preprocessing Failed. This Dataset is not suitable for our Operations.
+                                     Please, try with another dataset accourding to our instructions""",
+                                     }, 
+                                    status=200)
+                
+            #convert and get the csv file for this numpy array
+            preprocessed_file_values = preprocessed_file_values_tuple[0]
+            print(preprocessed_file_values)
+            # takes the 2D values and return a dict with filename and filepath
+            preprocessed_file_dict = new_dataset.get_preprocessed_csv_file(preprocessed_file_values)
+            
+            
+            # appling dataset to the selected models    
+            # if len(selected_models) > 0:
+            #     linear_flag = False
+            #     polynomial_flag = False
+            #     svr_flag = False
+            #     dt_flag = False
+            #     rmf_flag = False
+                
+            #     print(selected_models)
+            # print(preprocessed_file_dict)
+            # linear_regression = LinearRegression(preprocessed_file_dict["filePath"], split_ratio)
+            # linear_regression.perform_regression()
+                
+            return JsonResponse({"preprocessSuccess": True,
+                                    "fileInfo": preprocessed_file_dict}, status = 201)
         else:
             return JsonResponse({"errorMessage": "Invalid Input File"}, status=400)
         
