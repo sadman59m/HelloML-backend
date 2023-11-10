@@ -88,18 +88,10 @@ class Regression_view(View):
                                      Please, try with another dataset accourding to our instructions""",
                                      }, 
                                     status=200)
-            # appling dataset to the selected models    
-            # if len(selected_models) > 0:
-            #     linear_flag = False
-            #     polynomial_flag = False
-            #     svr_flag = False
-            #     dt_flag = False
-            #     rmf_flag = False
-                
-            #     print(selected_models)
-            # print(preprocessed_file_dict)
-            # linear_regression = LinearRegression(preprocessed_file_dict["filePath"], split_ratio)
-            # linear_regression.perform_regression()
+            
+            #pass the 2D data array to the Linear Regression
+            linear_regression = LinearRegression(preprocessed_file_values, split_ratio)
+            linear_regression.perform_regression()
                 
             return JsonResponse({"preprocessSuccess": True,
                                     "fileInfo": preprocessed_file_dict}, status = 201)
