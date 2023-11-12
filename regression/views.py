@@ -103,7 +103,8 @@ class Regression_view(View):
                 """Pass the 2D numpy array values and the split ratio"""
                 regression_model_instance = regression_model_class(preprocessed_file_values, split_ratio)
                 model_r2_score = regression_model_instance.perform_regression()
-                models_r2_scores[regression_model_name] = model_r2_score
+                # round to 2 deciaml places
+                models_r2_scores[regression_model_name] = round(model_r2_score, 3)
             
             
             return JsonResponse({"preprocessSuccess": True,
