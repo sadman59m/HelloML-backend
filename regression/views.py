@@ -69,7 +69,7 @@ class Regression_view(View):
             #access the 2nd value to see the success flag. False if preprocessing fails
             if preprocessed_file_values_tuple[1] == False:
                 return JsonResponse({"preprocessSuccess": False, 
-                                     "errorMessage": """Data Preprocessing Failed. This Dataset is not suitable for our Operations.
+                                     "errorMessage": """This Dataset is not suitable for our Operations.
                                      Please, try with another dataset accourding to our instructions""",
                                      }, 
                                     status=200)
@@ -82,7 +82,7 @@ class Regression_view(View):
             
             if preprocessed_file_dict == False:
                 return JsonResponse({"preprocessSuccess": False, 
-                                     "errorMessage": """Data Preprocessing Failed. This Dataset is not suitable for our Operations.
+                                     "errorMessage": """This Dataset is not suitable for our Operations.
                                      Please, try with another dataset accourding to our instructions""",
                                      }, 
                                     status=200)
@@ -110,7 +110,7 @@ class Regression_view(View):
             return JsonResponse({"preprocessSuccess": True,
                                     "fileInfo": preprocessed_file_dict,
                                     "model_results": models_r2_scores,
-                                    "split_ration": split_ratio,
+                                    "splitRatio": split_ratio,
                                     }, status = 201)
         else:
             return JsonResponse({"errorMessage": "Invalid Input File"}, status=400)
