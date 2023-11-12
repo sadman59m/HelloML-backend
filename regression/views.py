@@ -10,7 +10,10 @@ import uuid
 import os
 
 from .preprocessor import DatasetPreprocessor
-from .mlmodels import LinearRegression
+from .mlmodels import (LinearRegressionClass, 
+                       SupportVectorRegressorClass,
+                       DecisionTreeRegressorClass,
+                       RandomForestRegressorClass)
 
 
 # Create your views here.
@@ -28,16 +31,12 @@ class Regression_view(View):
         
         # get the all models info
         all_models = model_data[0]
-        print(all_models)
-        selected_models = []
+        selected_model_ids = []
         
         # filter the model name of the selected models
         for modelInfo in all_models:
             if modelInfo['checked'] == True:
-                selected_models.append(modelInfo["id"])
-                
-        print(selected_models)
-        print(len(selected_models))
+                selected_model_ids.append(modelInfo["id"])
         
         # validating split ratio
         try:
@@ -66,7 +65,6 @@ class Regression_view(View):
             
             #returns a tuple with 1st the 2D array, 2nd success flag True or False
             preprocessed_file_values_tuple = new_dataset.clean_file()
-            print(preprocessed_file_values_tuple[1])
             
             #access the 2nd value to see the success flag. False if preprocessing fails
             if preprocessed_file_values_tuple[1] == False:
@@ -89,12 +87,30 @@ class Regression_view(View):
                                      }, 
                                     status=200)
             
-            #pass the 2D data array to the Linear Regression
-            linear_regression = LinearRegression(preprocessed_file_values, split_ratio)
-            linear_regression.perform_regression()
-                
+            """Creationg an impty dictonary for storing models R2 scores"""
+            models_r2_scores = {}
+            
+            """Creating a model list for all the regression models"""
+            regression_models_classes = [(LinearRegressionClass, 'Linear Regression'),
+                                         (SupportVectorRegressorClass, 'Support Vector Regression'),
+                                         (DecisionTreeRegressorClass, 'Decision Tree Regression'),
+                                         (RandomForestRegressorClass, 'Random Forest Regression')]
+            
+            """Using loop to use selected model IDs as index to selec model classes"""
+            for index in range(len(selected_model_ids)):
+                regression_model_class = regression_models_classes[index][0]
+                regression_model_name = regression_models_classes[index][1]
+                """Pass the 2D numpy array values and the split ratio"""
+                regression_model_instance = regression_model_class(preprocessed_file_values, split_ratio)
+                model_r2_score = regression_model_instance.perform_regression()
+                models_r2_scores[regression_model_name] = model_r2_score
+            
+            
             return JsonResponse({"preprocessSuccess": True,
-                                    "fileInfo": preprocessed_file_dict}, status = 201)
+                                    "fileInfo": preprocessed_file_dict,
+                                    "model_results": models_r2_scores,
+                                    "split_ration": split_ratio,
+                                    }, status = 201)
         else:
             return JsonResponse({"errorMessage": "Invalid Input File"}, status=400)
         
