@@ -42,10 +42,10 @@ class Regression_view(View):
         try:
             split_ratio = float(model_data[-1].get('splitRatio'))
             print(split_ratio)
-            if split_ratio <= 0.0 or split_ratio >= 1.0:
+            if split_ratio < 0.1 or split_ratio > 0.9:
                 raise Exception("Invalid Split Ration")
         except:
-            return JsonResponse({"errorMessage": "Invalid Split Ratio.Keep in Range of 0 and 1."}, status = 400)
+            return JsonResponse({"errorMessage": "Invalid Split Ratio. Provide a value between 0.1 to 0.9"}, status = 400)
         
         if file_data and file_data.content_type == 'text/csv':
             new_uuid = uuid.uuid4()
